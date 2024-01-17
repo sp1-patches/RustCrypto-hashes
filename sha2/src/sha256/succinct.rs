@@ -5,7 +5,7 @@ extern "C" {
 
 #[inline]
 pub fn compress(state: &mut [u32; 8], blocks: &[[u8; 64]]) {
-    panic!("testing");
+    println!("compress");
     unsafe {
         for i in 0..blocks.len() {
             let mut w = [0u32; 64];
