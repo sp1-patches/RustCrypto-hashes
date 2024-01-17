@@ -157,7 +157,7 @@ cfg_if::cfg_if! {
         mod soft;
         mod aarch64;
         use aarch64::compress;
-    } else if #[cfg(all(feature = "zkvm"))] {
+    } else if #[cfg(all(target_os = "zkvm"))] {
         mod soft;
         mod succinct;
         use succinct::compress;
