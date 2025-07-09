@@ -1,7 +1,7 @@
 use digest::{generic_array::GenericArray, typenum::U64};
 
 cfg_if::cfg_if! {
-    if #[cfg(all(target_os = "zkvm", target_vendor = "succinct", target_arch = "riscv32"))] {
+    if #[cfg(all(target_os = "zkvm", target_vendor = "succinct"))] {
         mod succinct;
         use succinct::compress;
     } else if #[cfg(feature = "force-soft")] {
