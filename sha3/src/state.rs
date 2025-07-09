@@ -3,11 +3,7 @@ use core::convert::TryInto;
 const PLEN: usize = 25;
 const DEFAULT_ROUND_COUNT: usize = 24;
 
-#[cfg(all(
-    target_os = "zkvm",
-    target_vendor = "succinct",
-    target_arch = "riscv32"
-))]
+#[cfg(all(target_os = "zkvm", target_vendor = "succinct"))]
 use crate::succinct;
 
 #[derive(Clone)]
@@ -53,20 +49,12 @@ impl Sha3State {
 
     #[inline(always)]
     pub(crate) fn permute(&mut self) {
-        #[cfg(all(
-            target_os = "zkvm",
-            target_vendor = "succinct",
-            target_arch = "riscv32"
-        ))]
+        #[cfg(all(target_os = "zkvm", target_vendor = "succinct"))]
         {
             succinct::keccak_permute(&mut self.state);
         }
 
-        #[cfg(not(all(
-            target_os = "zkvm",
-            target_vendor = "succinct",
-            target_arch = "riscv32"
-        )))]
+        #[cfg(not(all(target_os = "zkvm", target_vendor = "succinct")))]
         {
             keccak::p1600(&mut self.state, self.round_count);
         }
