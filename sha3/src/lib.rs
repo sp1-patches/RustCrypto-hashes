@@ -5,7 +5,12 @@
     html_favicon_url = "https://raw.githubusercontent.com/RustCrypto/media/6ee8e381/logo.svg"
 )]
 #![cfg_attr(docsrs, feature(doc_cfg))]
-#![forbid(unsafe_code)]
+// `unsafe` is needed only on the SP1 zkVM target to call the accelerated
+// `syscall_keccak_permute` precompile; it stays forbidden everywhere else.
+#![cfg_attr(
+    not(all(target_os = "zkvm", target_vendor = "succinct")),
+    forbid(unsafe_code)
+)]
 #![warn(missing_docs, missing_debug_implementations)]
 #![warn(unreachable_pub)]
 
@@ -13,6 +18,9 @@ pub use digest::{self, CollisionResistance, CustomizedInit, Digest};
 
 /// Block-level types
 pub mod block_api;
+
+#[cfg(all(target_os = "zkvm", target_vendor = "succinct"))]
+mod succinct;
 
 use block_api::{Sha3HasherCore, Sha3ReaderCore};
 use digest::consts::{U0, U16, U28, U32, U48, U64, U72, U104, U136, U144, U168, U200};

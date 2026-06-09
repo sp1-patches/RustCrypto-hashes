@@ -62,12 +62,10 @@ where
 {
     #[inline]
     fn update_blocks(&mut self, blocks: &[Block<Self>]) {
-        self.keccak.with_f1600(|f1600| {
-            for block in blocks {
-                xor_block(&mut self.state, block);
-                f1600(&mut self.state);
-            }
-        });
+        for block in blocks {
+            xor_block(&mut self.state, block);
+            permute(&self.keccak, &mut self.state);
+        }
     }
 }
 
@@ -84,14 +82,12 @@ where
         let n = block.len();
         block[n - 1] |= 0x80;
 
-        self.keccak.with_f1600(|f1600| {
-            xor_block(&mut self.state, &block);
-            f1600(&mut self.state);
+        xor_block(&mut self.state, &block);
+        permute(&self.keccak, &mut self.state);
 
-            for (o, s) in out.chunks_mut(8).zip(self.state.as_mut().iter()) {
-                o.copy_from_slice(&s.to_le_bytes()[..o.len()]);
-            }
-        });
+        for (o, s) in out.chunks_mut(8).zip(self.state.iter()) {
+            o.copy_from_slice(&s.to_le_bytes()[..o.len()]);
+        }
     }
 }
 
@@ -109,10 +105,8 @@ where
         let n = block.len();
         block[n - 1] |= 0x80;
 
-        self.keccak.with_f1600(|f1600| {
-            xor_block(&mut self.state, &block);
-            f1600(&mut self.state);
-        });
+        xor_block(&mut self.state, &block);
+        permute(&self.keccak, &mut self.state);
 
         Sha3ReaderCore::new(&self.state, self.keccak)
     }
@@ -260,7 +254,7 @@ where
         for (src, dst) in self.state.iter().zip(block.chunks_mut(8)) {
             dst.copy_from_slice(&src.to_le_bytes()[..dst.len()]);
         }
-        self.keccak.with_f1600(|f1600| f1600(&mut self.state));
+        permute(&self.keccak, &mut self.state);
         block
     }
 }
@@ -291,6 +285,22 @@ where
 impl<Rate> digest::zeroize::ZeroizeOnDrop for Sha3ReaderCore<Rate> where
     Rate: BlockSizes + IsLessOrEqual<U200, Output = True>
 {
+}
+
+/// Applies the Keccak-f[1600] permutation to `state`.
+///
+/// On the SP1 zkVM target this dispatches to the `keccak_permute` precompile
+/// (`crate::succinct`); everywhere else it uses the portable `keccak` backend.
+#[inline(always)]
+fn permute(keccak: &Keccak, state: &mut State1600) {
+    #[cfg(all(target_os = "zkvm", target_vendor = "succinct"))]
+    {
+        let _ = keccak;
+        crate::succinct::keccak_permute(state);
+    }
+
+    #[cfg(not(all(target_os = "zkvm", target_vendor = "succinct")))]
+    keccak.with_f1600(|f1600| f1600(state));
 }
 
 pub(crate) fn xor_block(state: &mut State1600, block: &[u8]) {
