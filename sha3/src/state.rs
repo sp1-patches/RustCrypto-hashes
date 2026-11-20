@@ -51,7 +51,11 @@ impl Sha3State {
     pub(crate) fn permute(&mut self) {
         #[cfg(all(target_os = "zkvm", target_vendor = "succinct"))]
         {
-            succinct::keccak_permute(&mut self.state);
+            if self.round_count == DEFAULT_ROUND_COUNT {
+                succinct::keccak_permute(&mut self.state);
+            } else {
+                keccak::p1600(&mut self.state, self.round_count);
+            }
         }
 
         #[cfg(not(all(target_os = "zkvm", target_vendor = "succinct")))]

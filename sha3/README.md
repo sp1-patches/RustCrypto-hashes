@@ -11,6 +11,10 @@ Pure Rust implementation of the [SHA-3 (Keccak) hash function][1].
 
 [Documentation][docs-link]
 
+## SP1 support
+
+This patch keeps the upstream 0.10.8 cSHAKE initialization bug. cSHAKE can produce nonstandard output when its encoded function name and customization fill a whole rate block. Avoid cSHAKE in this version. SHA-3, Keccak, SHAKE and TurboSHAKE are not affected by this limitation.
+
 ## Minimum Supported Rust Version
 
 Rust **1.41** or higher.
